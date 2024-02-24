@@ -8,18 +8,6 @@
     var connection = await mongoose.connect('mongodb://127.0.0.1:27017/chat')
     console.log("Connected")
 
-    //express
-    const express = require('express')
-    const app = express()
-    const port = 3000
-    
-    const bodyParser = require('body-parser');
-    app.use(bodyParser.json());
-    app.use(bodyParser.urlencoded({ extended: true }));
-
-    app.get('/', (req, res) => {
-      res.sendFile(path.resolve("../docs/index.html"))
-    })
 
     //websockets
     var {WebSocketServer} = require("ws")
@@ -35,11 +23,5 @@
     
       ws.send('something');
     });
-
-
-    //start listening on express app
-    app.listen(port, () => {
-      console.log(`Example app listening on port port`)
-    })
 
 })()
