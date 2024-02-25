@@ -4,13 +4,16 @@
     const creationStuff = require("./creation.js")
     const mongoose = require('mongoose');
     const path = require("path")
-    
+    const { createHash } = require('crypto');
 
+    
     //mongo connect
     var connection = await mongoose.connect('mongodb://127.0.0.1:27017/chat')
     console.log("Connected")
 
 
+
+    const genRanHex = size => [...Array(size)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
     //websockets
     var {WebSocketServer} = require("ws")
 
@@ -32,12 +35,30 @@
                 ws.send(JSON.stringify({"error":acc.error,"status":409}))
                 return
             }
-            ws.send(JSON.stringify({"success":"Made account succesfuly!"}))
+            ws.send(JSON.stringify({"success":"Made account succesfuly!",status:200}))
+        }else if(data.type=="createSession"){
+            let user = await schema.User.find({username:data.username})
+            if(!user[0]){
+                ws.send(JSON.stringify({"error":"That user doesn't exist!",status:404}))
+            }
+            user = user[0]
+            if(user.password == createHash('sha256').update(data.password).digest('hex')){
+                session.token = genRanHex(32)
+                session.username = data.username
+                sessions[user["_id"]] = session
+                ws.send(JSON.stringify({"sessionToken":session.token,status:200}))
+            }else{
+                ws.send(JSON.stringify({"error":"Incorrect password",status:403}))
+                
+            }
+
         }else{
             ws.send(JSON.stringify({"error":"Invalid message type","status":404}))
+            
         }
 
     }catch(err){
+        
         console.warn(err)
         ws.send(JSON.stringify({"error":"Something went wrong on the server side.","status":500}))
     }
