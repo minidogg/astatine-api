@@ -11,7 +11,8 @@
     var connection = await mongoose.connect('mongodb://127.0.0.1:27017/chat')
     console.log("Connected")
 
-
+    // let channel = await new schema.Channel({"name":"general",messages:[]}).save()
+    // await new schema.Server({"name":"The Warehouse",channels:[channel]}).save()
 
     const genRanHex = size => [...Array(size)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
     //websockets
@@ -44,6 +45,7 @@
             user = user[0]
             if(user.password == createHash('sha256').update(data.password).digest('hex')){
                 session.token = genRanHex(32)
+                session.id = user["_id"]
                 session.username = data.username
                 sessions[user["_id"]] = session
                 ws.send(JSON.stringify({"sessionToken":session.token,status:200}))
@@ -52,6 +54,10 @@
                 
             }
 
+        }else if(data.type=="joinServer"){
+            if(session == {}){
+                ws.send(JSON.stringify({"error":"You need to create a session!",status:403}))
+            }
         }else{
             ws.send(JSON.stringify({"error":"Invalid message type","status":404}))
             
